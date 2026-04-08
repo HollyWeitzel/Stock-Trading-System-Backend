@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Stock Trading System - Admin</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <div class="container" style="margin-top:18px;">
+    <div class="page-title">Admin Interface</div>
+
+    <!-- MARKET MANUAL OVERRIDE (ADDED) -->
+    <div class="card pad" style="margin-top:14px;">
+      <div style="font-weight:800;margin-bottom:10px;">Market Manual Override</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:520px;">
+        <div>
+          <div class="label">Override</div>
+          <select class="input" id="marketOverrideEnabled">
+            <option value="false">Use Schedule (Auto)</option>
+            <option value="true">Manual Override</option>
+          </select>
+        </div>
+        <div>
+          <div class="label">Manual Market State</div>
+          <select class="input" id="marketOverrideState">
+            <option value="OPEN">Force Open</option>
+            <option value="CLOSED">Force Closed</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn" id="btnSaveOverride" style="margin-top:12px;max-width:520px;width:100%;">
+        Save Override
+      </button>
+
+      <button class="btn secondary" id="btnResetToSchedule" style="margin-top:10px;max-width:520px;width:100%;">
+        Reset to Schedule (Default)
+      </button>
+
+      <div class="helper" id="overrideMsg" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- MARKET HOURS -->
+    <div class="card pad" style="margin-top:14px;">
+      <div style="font-weight:800;margin-bottom:10px;">Market Hours</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:520px;">
+        <div>
+          <div class="label">Open Time</div>
+          <input class="input" id="openTime" type="time" />
+        </div>
+        <div>
+          <div class="label">Close Time</div>
+          <input class="input" id="closeTime" type="time" />
+        </div>
+      </div>
+
+      <button class="btn" id="btnSaveHours" style="margin-top:12px;max-width:520px;width:100%;">Save Market Hours</button>
+      <div class="helper" id="hoursMsg" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- HOLIDAYS (ADDED) -->
+    <div class="card pad" style="margin-top:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-weight:800;">Market Holidays</div>
+        <div class="muted">Market is automatically closed on these dates</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 2fr 1fr;gap:14px;margin-top:12px;max-width:760px;">
+        <div>
+          <div class="label">Holiday Date</div>
+          <input class="input" id="holDate" type="date" />
+        </div>
+        <div>
+          <div class="label">Holiday Name</div>
+          <input class="input" id="holName" placeholder="e.g., Christmas Day" />
+        </div>
+        <div style="display:flex;align-items:end;">
+          <button class="btn" id="btnAddHoliday" style="width:100%;">Add Holiday</button>
+        </div>
+      </div>
+
+      <div class="helper" id="holMsg" style="margin-top:10px;"></div>
+
+      <table class="table" id="holTable" style="margin-top:10px;">
+        <thead>
+          <tr>
+            <th style="width:180px;">Date</th>
+            <th>Name</th>
+            <th style="width:220px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- CREATE STOCK -->
+    <div class="card pad" style="margin-top:14px;">
+      <div style="font-weight:800;margin-bottom:10px;">Create Stock</div>
+
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px;">
+        <div>
+          <div class="label">Company</div>
+          <input class="input" id="newCompany" placeholder="Apple Inc." />
+        </div>
+        <div>
+          <div class="label">Ticker</div>
+          <input class="input" id="newTicker" placeholder="AAPL" />
+        </div>
+        <div>
+          <div class="label">Market Cap</div>
+          <input class="input" id="newMarketCap" placeholder="2.75T" />
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px;max-width:520px;">
+        <div>
+          <div class="label">Price</div>
+          <input class="input" id="newPrice" placeholder="175.43" />
+        </div>
+        <div>
+          <div class="label">Volume</div>
+          <input class="input" id="newVolume" placeholder="52340821" />
+        </div>
+      </div>
+
+      <button class="btn" id="btnCreateStock" style="margin-top:12px;max-width:520px;width:100%;">Create Stock</button>
+      <div class="helper" id="createMsg" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- AVAILABLE STOCKS -->
+    <div class="card pad" style="margin-top:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-weight:800;">Available Stocks</div>
+        <div class="muted" id="countText">0 stocks</div>
+      </div>
+
+      <table class="table" id="adminStocksTable" style="margin-top:10px;">
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Ticker</th>
+            <th>Price</th>
+            <th>Volume</th>
+            <th>Market Cap</th>
+            <th>Open</th>
+            <th>High</th>
+            <th>Low</th>
+            <th style="width:220px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div class="helper" id="tableMsg" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="footer">© 2025 Stock Trading System. All rights reserved.</div>
+  </div>
+
+  <script src="assets/app.js"></script>
+  <script>
+    STS.requireAuth(["ADMIN"]);
+    STS.renderAdminHeader();
+
+    const tbody = document.querySelector("#adminStocksTable tbody");
+    const countText = document.getElementById("countText");
+    const tableMsg = document.getElementById("tableMsg");
+
+    const hoursMsg = document.getElementById("hoursMsg");
+    const createMsg = document.getElementById("createMsg");
+
+    // MARKET OVERRIDE (ADDED)
+    const marketOverrideEnabled = document.getElementById("marketOverrideEnabled");
+    const marketOverrideState = document.getElementById("marketOverrideState");
+    const btnSaveOverride = document.getElementById("btnSaveOverride");
+    const btnResetToSchedule = document.getElementById("btnResetToSchedule");
+    const overrideMsg = document.getElementById("overrideMsg");
+
+    // HOLIDAYS (ADDED)
+    const holDate = document.getElementById("holDate");
+    const holName = document.getElementById("holName");
+    const btnAddHoliday = document.getElementById("btnAddHoliday");
+    const holMsg = document.getElementById("holMsg");
+    const holTbody = document.querySelector("#holTable tbody");
+
+    function loadHours() {
+      const s = STS.loadState();
+      openTime.value = s.market?.openTime || "09:30";
+      closeTime.value = s.market?.closeTime || "16:00";
+
+      // ADDED: load manual override controls
+      marketOverrideEnabled.value = String(s.market?.overrideEnabled ?? false);
+      marketOverrideState.value = String(s.market?.overrideState || "CLOSED").toUpperCase();
+    }
+
+    function renderStocks() {
+      const s = STS.loadState();
+      const stocks = s.stocks || [];
+      countText.textContent = `${stocks.length} stocks`;
+      tbody.innerHTML = "";
+
+      stocks.forEach(st => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${st.company}</td>
+          <td>${st.ticker}</td>
+          <td>${STS.money(st.price)}</td>
+          <td>${Number(st.volume).toLocaleString()}</td>
+          <td>${st.marketCap || "-"}</td>
+          <td>${STS.money(st.open)}</td>
+          <td>${STS.money(st.high)}</td>
+          <td>${STS.money(st.low)}</td>
+          <td>
+            <button class="btn small" data-edit="${st.ticker}">Edit</button>
+            <button class="btn small secondary" data-del="${st.ticker}">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // wire buttons
+      tbody.querySelectorAll("[data-del]").forEach(btn => {
+        btn.onclick = () => {
+          const tk = btn.dataset.del;
+          if (!confirm(`Delete stock ${tk}?`)) return;
+          const res = STS.deleteStock(tk);
+          tableMsg.textContent = res.msg;
+          renderStocks();
+        };
+      });
+
+      tbody.querySelectorAll("[data-edit]").forEach(btn => {
+        btn.onclick = () => openEditRow(btn.dataset.edit);
+      });
+    }
+
+    function openEditRow(ticker) {
+      const s = STS.loadState();
+      const st = s.stocks.find(x => x.ticker === ticker);
+      if (!st) return;
+
+      // Replace the row with an edit form row
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+      const row = rows.find(r => r.children[1]?.textContent === ticker);
+      if (!row) return;
+
+      const original = ticker;
+
+      row.innerHTML = `
+        <td><input class="input" id="eCompany" value="${st.company.replaceAll('"','&quot;')}" /></td>
+        <td><input class="input" id="eTicker" value="${st.ticker}" /></td>
+        <td><input class="input" id="ePrice" value="${st.price}" /></td>
+        <td><input class="input" id="eVolume" value="${st.volume}" /></td>
+        <td><input class="input" id="eMarketCap" value="${(st.marketCap||"-").replaceAll('"','&quot;')}" /></td>
+        <td class="muted">${STS.money(st.open)}</td>
+        <td class="muted">${STS.money(st.high)}</td>
+        <td class="muted">${STS.money(st.low)}</td>
+        <td>
+          <button class="btn small" id="btnSaveEdit">Save</button>
+          <button class="btn small secondary" id="btnCancelEdit">Cancel</button>
+        </td>
+      `;
+
+      row.querySelector("#btnCancelEdit").onclick = () => renderStocks();
+
+      row.querySelector("#btnSaveEdit").onclick = () => {
+        const payload = {
+          company: row.querySelector("#eCompany").value.trim(),
+          ticker: row.querySelector("#eTicker").value.trim(),
+          price: row.querySelector("#ePrice").value.trim(),
+          volume: row.querySelector("#eVolume").value.trim(),
+          marketCap: row.querySelector("#eMarketCap").value.trim(),
+        };
+
+        const res = STS.updateStock(original, payload);
+        tableMsg.textContent = res.msg;
+        renderStocks();
+      };
+    }
+
+    // Save hours
+    btnSaveHours.onclick = () => {
+      const o = openTime.value;
+      const c = closeTime.value;
+      const res = STS.setMarketHours(o, c);
+      hoursMsg.textContent = res.msg;
+    };
+
+    // ADDED: Save manual override
+    btnSaveOverride.onclick = () => {
+      const enabled = marketOverrideEnabled.value === "true";
+      const state = marketOverrideState.value;
+      const res = STS.setMarketOverride(enabled, state);
+      overrideMsg.textContent = res.msg;
+      loadHours(); // keep UI synced
+    };
+
+    // ADDED: One-click return to default schedule mode
+    btnResetToSchedule.onclick = () => {
+      const res = STS.setMarketOverride(false);
+      overrideMsg.textContent = res.msg;
+      loadHours();
+    };
+
+    // Create stock
+    btnCreateStock.onclick = () => {
+      const payload = {
+        company: newCompany.value.trim(),
+        ticker: newTicker.value.trim(),
+        marketCap: newMarketCap.value.trim(),
+        price: newPrice.value.trim(),
+        volume: newVolume.value.trim(),
+      };
+
+      const res = STS.createStock(payload);
+      createMsg.textContent = res.msg;
+
+      if (res.ok) {
+        newCompany.value = "";
+        newTicker.value = "";
+        newMarketCap.value = "";
+        newPrice.value = "";
+        newVolume.value = "";
+        renderStocks();
+      }
+    };
+
+    // HOLIDAYS (ADDED)
+    function renderHolidays() {
+      const s = STS.loadState();
+      const holidays = [...(s.market?.holidays || [])].sort((a,b)=> (a.date||"").localeCompare(b.date||""));
+      holTbody.innerHTML = "";
+
+      if (holidays.length === 0) {
+        holTbody.innerHTML = `<tr><td colspan="3" class="muted">No holidays added.</td></tr>`;
+        return;
+      }
+
+      holidays.forEach(h => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><input class="input" type="date" value="${h.date}" data-hdate="${h.id}" /></td>
+          <td><input class="input" value="${String(h.name||"").replaceAll('"','&quot;')}" data-hname="${h.id}" /></td>
+          <td>
+            <button class="btn small" data-hsave="${h.id}">Save</button>
+            <button class="btn small secondary" data-hdel="${h.id}">Delete</button>
+          </td>
+        `;
+        holTbody.appendChild(tr);
+      });
+
+      holTbody.querySelectorAll("[data-hsave]").forEach(btn => {
+        btn.onclick = () => {
+          const id = Number(btn.dataset.hsave);
+          const date = holTbody.querySelector(`[data-hdate="${id}"]`).value;
+          const name = holTbody.querySelector(`[data-hname="${id}"]`).value.trim();
+          const res = STS.editHoliday(id, date, name);
+          holMsg.textContent = res.msg;
+          renderHolidays();
+        };
+      });
+
+      holTbody.querySelectorAll("[data-hdel]").forEach(btn => {
+        btn.onclick = () => {
+          const id = Number(btn.dataset.hdel);
+          const res = STS.deleteHoliday(id);
+          holMsg.textContent = res.msg;
+          renderHolidays();
+        };
+      });
+    }
+
+    btnAddHoliday.onclick = () => {
+      const d = holDate.value;
+      const n = holName.value.trim();
+      const res = STS.addHoliday(d, n);
+      holMsg.textContent = res.msg;
+      if (res.ok) {
+        holDate.value = "";
+        holName.value = "";
+      }
+      renderHolidays();
+    };
+
+    loadHours();
+    renderHolidays();
+    renderStocks();
+
+    window.addEventListener("sts-updated", () => {
+      loadHours();
+      renderHolidays();
+      renderStocks();
+    });
+
+    window.addEventListener("storage", () => {
+      loadHours();
+      renderHolidays();
+      renderStocks();
+    });
+  </script>
+</body>
+</html>

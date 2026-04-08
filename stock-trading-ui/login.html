@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Stock Trading System - Login</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page-title">Stock Trading System</div>
+    <div class="page-subtitle">Login</div>
+
+    <div class="card pad" style="max-width:520px;margin:0 auto;">
+
+      <label class="label">Username</label>
+      <input class="input" id="username" placeholder="Enter username" />
+
+      <label class="label" style="margin-top:14px;">Password</label>
+      <input class="input" id="password" type="password" placeholder="Enter password" />
+
+      <label class="label" style="margin-top:14px;">User Role</label>
+      <select class="input" id="role">
+        <option value="" selected>Select role</option>
+        <option value="CUSTOMER">Customer</option>
+        <option value="ADMIN">Admin</option>
+      </select>
+
+      <button class="btn" id="btnLogin" style="margin-top:16px;width:100%;">Login</button>
+
+      <!-- Token section (normal flow) -->
+      <div id="tokenSection" style="display:none; margin-top:16px;">
+        <label class="label">Security Token</label>
+        <input class="input" id="token" placeholder="Enter your token" />
+
+        <button class="btn" id="btnToken" style="margin-top:10px;width:100%;">Verify Token</button>
+      </div>
+
+      <!-- Recovery section (ONLY when locked) -->
+      <div id="recoverySection" style="display:none; margin-top:16px;">
+        <label class="label">Recovery Code</label>
+        <input class="input" id="recovery" placeholder="REC-1234-5678" />
+
+        <button class="btn secondary" id="btnRecover" style="margin-top:10px;width:100%;">
+          Unlock Account
+        </button>
+
+        <div class="muted" style="margin-top:8px;font-size:13px;">
+          Recovery is used only when your account is locked.
+          After unlocking, you must log in again normally.
+        </div>
+      </div>
+
+      <button class="btn secondary" id="btnCreate" style="margin-top:12px;width:100%;">
+        Create Customer Account
+      </button>
+
+      <div class="helper" id="msg" style="margin-top:14px;">
+        Validation and status messages will appear here
+      </div>
+    </div>
+
+    <div class="card pad" style="max-width:520px;margin:18px auto 0;">
+      <div style="font-weight:600;margin-bottom:6px;">Routing Behavior:</div>
+      <ul style="margin:0 0 0 18px;">
+        <li>Customers are routed to the Customer Dashboard</li>
+        <li>Administrators are routed to the Admin Interface</li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="assets/app.js"></script>
+  <script>
+    const msg = document.getElementById("msg");
+
+    const tokenSection = document.getElementById("tokenSection");
+    const recoverySection = document.getElementById("recoverySection");
+
+    const btnCreate = document.getElementById("btnCreate");
+    const btnLogin = document.getElementById("btnLogin");
+    const btnToken = document.getElementById("btnToken");
+    const btnRecover = document.getElementById("btnRecover");
+
+    btnCreate.onclick = () => location.href = "register.html";
+
+    function hideAllSecondStep() {
+      tokenSection.style.display = "none";
+      recoverySection.style.display = "none";
+    }
+
+    btnLogin.onclick = () => {
+      const u = document.getElementById("username").value.trim();
+      const p = document.getElementById("password").value;
+      const r = document.getElementById("role").value;
+
+      if (!u || !p || !r) {
+        msg.textContent = "Please enter username, password, and select a role.";
+        hideAllSecondStep();
+        return;
+      }
+
+      const res = STS.login(u, p, r);
+
+      if (!res.ok) {
+        msg.textContent = res.msg;
+
+        // If locked: show recovery ONLY; otherwise show nothing
+        if (res.locked) {
+          tokenSection.style.display = "none";
+          recoverySection.style.display = "block";
+        } else {
+          hideAllSecondStep();
+        }
+        return;
+      }
+
+      // Normal flow: token step only
+      recoverySection.style.display = "none";
+      tokenSection.style.display = "block";
+      msg.textContent = "Enter your security token to continue.";
+    };
+
+    btnToken.onclick = () => {
+      const t = document.getElementById("token").value.trim();
+      if (!t) {
+        msg.textContent = "Enter your security token.";
+        return;
+      }
+
+      const res = STS.verifyToken(t);
+      msg.textContent = res.msg;
+
+      if (res.ok) {
+        const state = STS.loadState();
+        window.location.href = (state.session.role === "ADMIN") ? "admin.html" : "dashboard.html";
+      }
+    };
+
+    btnRecover.onclick = () => {
+      const u = document.getElementById("username").value.trim();
+      const r = document.getElementById("role").value;
+      const code = document.getElementById("recovery").value.trim();
+
+      if (!u || !r || !code) {
+        msg.textContent = "Enter username, select role, and enter recovery code.";
+        return;
+      }
+
+      const res = STS.recoverAccount(u, r, code);
+      msg.textContent = res.msg;
+
+      if (res.ok) {
+        // Recovery is NOT a login method; user must log in again
+        hideAllSecondStep();
+        document.getElementById("password").value = "";
+        document.getElementById("token").value = "";
+        document.getElementById("recovery").value = "";
+      }
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Stock Trading System - Create Account</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <style>
+    .strength { margin-top: 6px; font-size: 13px; font-weight: 600; }
+    .weak { color: #b00020; }
+    .medium { color: #c77a00; }
+    .strong { color: #0a7d2c; }
+    .token-box {
+      margin-top: 14px;
+      padding: 12px;
+      border: 1px solid #ccc;
+      background: #f7f7f7;
+      border-radius: 6px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="page-title">Stock Trading System</div>
+    <div class="page-subtitle">Create Account</div>
+
+    <div class="card pad" style="max-width:720px;margin:0 auto;">
+      <label class="label">Full Name</label>
+      <input class="input" id="name" placeholder="Enter your full name"/>
+
+      <label class="label" style="margin-top:14px;">Username</label>
+      <input class="input" id="username" placeholder="Choose a username"/>
+
+      <label class="label" style="margin-top:14px;">Email Address</label>
+      <input class="input" id="email" placeholder="Enter your email address"/>
+
+      <label class="label" style="margin-top:14px;">Password</label>
+      <input class="input" id="password" type="password" placeholder="Create a password"/>
+
+      <div class="muted" style="margin-top:6px;font-size:13px;">
+        Password must contain:
+        <ul style="margin:4px 0 0 18px;">
+          <li>At least 8 characters</li>
+          <li>Uppercase letter</li>
+          <li>Lowercase letter</li>
+          <li>Number</li>
+          <li>Special character</li>
+        </ul>
+      </div>
+
+      <div id="strength" class="strength"></div>
+
+      <label class="label" style="margin-top:14px;">Confirm Password</label>
+      <input class="input" id="password2" type="password" placeholder="Confirm your password"/>
+
+      <button class="btn" id="btnCreate" style="margin-top:18px;width:100%;">Create Account</button>
+
+      <div class="helper" id="msg" style="margin-top:14px;"></div>
+
+      <div id="tokenBox" class="token-box" style="display:none;"></div>
+
+      <div style="text-align:center;margin-top:18px;">
+        <div class="muted">Already have an account?</div>
+        <a href="login.html">Log in</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/app.js"></script>
+  <script>
+    const msg = document.getElementById("msg");
+    const tokenBox = document.getElementById("tokenBox");
+
+    const elName = document.getElementById("name");
+    const elUsername = document.getElementById("username");
+    const elEmail = document.getElementById("email");
+    const elPass1 = document.getElementById("password");
+    const elPass2 = document.getElementById("password2");
+    const strengthBox = document.getElementById("strength");
+
+    function checkStrength(p) {
+      let score = 0;
+      if (p.length >= 8) score++;
+      if (/[A-Z]/.test(p)) score++;
+      if (/[a-z]/.test(p)) score++;
+      if (/[0-9]/.test(p)) score++;
+      if (/[^A-Za-z0-9]/.test(p)) score++;
+
+      if (score <= 2) {
+        strengthBox.textContent = "Weak password";
+        strengthBox.className = "strength weak";
+      } else if (score <= 4) {
+        strengthBox.textContent = "Medium strength password";
+        strengthBox.className = "strength medium";
+      } else {
+        strengthBox.textContent = "Strong password";
+        strengthBox.className = "strength strong";
+      }
+    }
+
+    elPass1.addEventListener("input", () => checkStrength(elPass1.value));
+
+    document.getElementById("btnCreate").onclick = () => {
+      const n = elName.value.trim();
+      const u = elUsername.value.trim();
+      const e = elEmail.value.trim();
+      const p1 = elPass1.value;
+      const p2 = elPass2.value;
+
+      if (!n || !u || !e || !p1 || !p2) {
+        msg.textContent = "All fields are required.";
+        return;
+      }
+
+      if (p1 !== p2) {
+        msg.textContent = "Passwords do not match.";
+        return;
+      }
+
+      const res = STS.registerCustomer({
+        name: n,
+        username: u,
+        email: e,
+        password: p1
+      });
+
+      if (!res.ok) {
+        msg.textContent = res.msg;
+        return;
+      }
+
+      msg.textContent = res.msg;
+
+      tokenBox.style.display = "block";
+      tokenBox.innerHTML = `
+        <div style="font-weight:700;">Save these codes</div>
+
+        <div style="margin-top:10px;font-weight:600;">Security Token</div>
+        <div style="font-size:22px;margin-top:6px;letter-spacing:1px;">
+          ${res.token}
+        </div>
+
+        <div style="margin-top:14px;font-weight:600;">Recovery Code</div>
+        <div style="font-size:18px;margin-top:6px;letter-spacing:1px;">
+          ${res.recoveryCode}
+        </div>
+
+        <div class="muted" style="margin-top:10px;">
+          Recovery is used only if your account becomes locked.
+        </div>
+      `;
+
+      setTimeout(() => location.href = "login.html", 3500);
+    };
+  </script>
+</body>
+</html>

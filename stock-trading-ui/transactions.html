@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Transaction History</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page-title" style="margin-top:28px;">Transaction History</div>
+
+    <div class="card pad" style="margin-top:18px;">
+      <div style="font-weight:700;">Filters</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-top:12px;align-items:end;">
+        <div>
+          <div class="label">Date Range</div>
+          <input class="input" id="fromDate" type="date"/>
+        </div>
+
+        <div>
+          <div class="label">to</div>
+          <input class="input" id="toDate" type="date"/>
+        </div>
+
+        <div>
+          <div class="label">Transaction Type</div>
+          <select class="input" id="typeFilter">
+            <option value="ALL" selected>All Types</option>
+            <option>Buy</option>
+            <option>Sell</option>
+            <option>Deposit</option>
+            <option>Withdraw</option>
+            <option>Cancel</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:14px;">
+        <button class="btn" id="applyBtn">Apply Filters</button>
+        <button class="btn secondary" id="resetBtn">Reset</button>
+      </div>
+    </div>
+
+    <div class="card pad" style="margin-top:18px;">
+      <table class="table" id="txTable">
+        <thead>
+          <tr>
+            <th>Date/Time</th>
+            <th>Transaction Type</th>
+            <th>Stock Ticker</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Total Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
+        <div class="muted" id="countText">Showing 0 of 0 transactions</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn secondary small" id="prevBtn">Previous</button>
+          <div class="pill" id="pagePill">1</div>
+          <button class="btn secondary small" id="nextBtn">Next</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">© 2025 Stock Trading System. All rights reserved.</div>
+  </div>
+
+  <script src="assets/app.js"></script>
+  <script>
+    STS.requireAuth(["CUSTOMER"]);
+    STS.renderCustomerHeader("transactions");
+
+    const s0 = STS.loadState();
+    const userId = s0.session.userId;
+
+    const tbody = document.querySelector("#txTable tbody");
+    const countText = document.getElementById("countText");
+    const pagePill = document.getElementById("pagePill");
+
+    const fromDate = document.getElementById("fromDate");
+    const toDate = document.getElementById("toDate");
+    const typeFilter = document.getElementById("typeFilter");
+
+    let page = 1;
+    const pageSize = 8;
+    let filtered = [];
+
+    function parseDateOnly(isoLike){
+      return isoLike ? isoLike.slice(0,10) : "";
+    }
+
+    function applyFilters(){
+      const s = STS.loadState();
+      const txs = s.transactions.filter(t => t.userId === userId);
+
+      const f = fromDate.value;
+      const t = toDate.value;
+      const type = typeFilter.value;
+
+      filtered = txs.filter(x => {
+        const d = parseDateOnly(x.dt);
+        if (f && d < f) return false;
+        if (t && d > t) return false;
+        if (type !== "ALL" && x.type !== type) return false;
+        return true;
+      });
+
+      page = 1;
+      render();
+    }
+
+    function resetFilters(){
+      fromDate.value = "";
+      toDate.value = "";
+      typeFilter.value = "ALL";
+      applyFilters();
+    }
+
+    function render(){
+      tbody.innerHTML = "";
+
+      const total = filtered.length;
+      const start = (page - 1) * pageSize;
+      const end = start + pageSize;
+      const slice = filtered.slice(start, end);
+
+      slice.forEach(t => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${t.dt}</td>
+          <td>${t.type}</td>
+          <td>${t.ticker}</td>
+          <td>${t.qty}</td>
+          <td>${typeof t.price === "number" ? STS.money(t.price) : t.price}</td>
+          <td>${STS.money(t.total)}</td>
+          <td>${t.status}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const showing = slice.length;
+      countText.textContent = `Showing ${showing} of ${total} transactions`;
+      pagePill.textContent = String(page);
+
+      prevBtn.disabled = page <= 1;
+      nextBtn.disabled = end >= total;
+    }
+
+    applyBtn.onclick = applyFilters;
+    resetBtn.onclick = resetFilters;
+    prevBtn.onclick = () => { if(page>1){ page--; render(); } };
+    nextBtn.onclick = () => { if((page*pageSize) < filtered.length){ page++; render(); } };
+
+    applyFilters();
+
+    // Sync when Admin or other page updates state
+    window.addEventListener("sts-updated", applyFilters);
+    window.addEventListener("storage", applyFilters);
+  </script>
+</body>
+</html>

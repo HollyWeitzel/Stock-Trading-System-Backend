@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Stock Trading System - Dashboard</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <div class="container" style="margin-top:18px;">
+    <div class="tabs">
+      <a class="active" href="dashboard.html">Market Overview</a>
+      <a href="#trade">Trade Stock</a>
+    </div>
+
+    <div class="section">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h2 class="section-title">Available Stocks</h2>
+        <div class="badge" id="marketStatus">● Market Open</div>
+      </div>
+
+      <div class="card pad">
+        <table class="table" id="stocksTable">
+          <thead>
+            <tr>
+              <th>Company Name</th>
+              <th>Stock Ticker</th>
+              <th>Current Price</th>
+              <th>Volume</th>
+              <th>Market Cap</th>
+              <th>Opening Price</th>
+              <th>Day High</th>
+              <th>Day Low</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="trade" class="section">
+      <h2 class="section-title">Trade Stock</h2>
+
+      <div class="card pad" style="display:grid;grid-template-columns:2fr 1fr;gap:18px;">
+        <div class="card pad">
+          <div style="font-weight:700;margin-bottom:10px;">Selected Stock</div>
+
+          <div class="row">
+            <div>
+              <div class="muted">Stock Ticker</div>
+              <div id="selTicker" style="font-weight:700;">-</div>
+            </div>
+            <div>
+              <div class="muted">Company Name</div>
+              <div id="selCompany" style="font-weight:700;">-</div>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:10px;">
+            <div>
+              <div class="muted">Current Market Price</div>
+              <div id="selPrice" style="font-weight:700;">$0.00</div>
+            </div>
+            <div>
+              <div class="muted">Available Cash</div>
+              <div id="selCash" style="font-weight:700;">$0.00</div>
+            </div>
+          </div>
+
+          <hr class="sep"/>
+
+          <div style="font-weight:700;margin-bottom:10px;">Order Details</div>
+
+          <div class="muted">Transaction Type</div>
+          <div style="display:flex;gap:10px;margin:8px 0 14px;">
+            <button class="btn inline" id="buyBtn">Buy</button>
+            <button class="btn inline secondary" id="sellBtn">Sell</button>
+          </div>
+
+          <label class="label">Quantity</label>
+          <input id="qty" class="input" value="0" />
+
+          <label class="label" style="margin-top:14px;">Order Type</label>
+          <input class="input" value="Market Order" disabled />
+
+          <div class="card pad" style="margin-top:12px;">
+            <div class="muted">Estimated Total Cost</div>
+            <div id="estTotal" style="font-size:22px;font-weight:800;">$0.00</div>
+          </div>
+
+          <div style="display:flex;gap:12px;margin-top:14px;">
+            <button class="btn" id="submitOrder" style="flex:1;">Submit Order</button>
+            <button class="btn secondary" id="cancelSelection" style="flex:1;">Cancel</button>
+          </div>
+
+          <div class="helper" id="msg" style="margin-top:12px;"></div>
+        </div>
+
+        <div class="card pad">
+          <div style="font-weight:700;margin-bottom:10px;">Order Status</div>
+          <div id="orderStatusList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/app.js"></script>
+  <script>
+    STS.requireAuth(["CUSTOMER"]);
+    STS.renderCustomerHeader("dashboard");
+    STS.startPriceGenerator();
+
+    const s0 = STS.loadState();
+    const userId = s0.session.userId;
+
+    const body = document.querySelector("#stocksTable tbody");
+    const selTicker = document.getElementById("selTicker");
+    const selCompany = document.getElementById("selCompany");
+    const selPrice = document.getElementById("selPrice");
+    const selCash = document.getElementById("selCash");
+    const qty = document.getElementById("qty");
+    const estTotal = document.getElementById("estTotal");
+    const msg = document.getElementById("msg");
+    const orderStatusList = document.getElementById("orderStatusList");
+    const marketStatus = document.getElementById("marketStatus"); // ADDED
+
+    let selectedTicker = null;
+    let side = "Buy";
+
+    function cash() {
+      const s = STS.loadState();
+      return STS.getCashBalance
+        ? STS.getCashBalance(s, userId)
+        : (s.cashAccounts.find(a => a.userId === userId)?.balance || 0);
+    }
+
+    // ADDED: market badge + UI lock
+    function refreshMarketBadge() {
+      const s = STS.loadState();
+      const market = s.market || {};
+      const isOpen = (typeof STS.isMarketOpen === "function") ? STS.isMarketOpen() : true;
+
+      const overrideEnabled = market.overrideEnabled === true;
+      const overrideState = String(market.overrideState || "CLOSED").toUpperCase();
+      const openTime = market.openTime || "09:30";
+      const closeTime = market.closeTime || "16:00";
+
+      // Badge text + tooltip
+      if (overrideEnabled) {
+        marketStatus.textContent = isOpen
+          ? "● Market Open (Manual Override)"
+          : "● Market Closed (Manual Override)";
+        marketStatus.title = `Manual override is ON (${overrideState}). Schedule is ${openTime} - ${closeTime}.`;
+      } else {
+        marketStatus.textContent = isOpen
+          ? `● Market Open (${openTime}-${closeTime})`
+          : `● Market Closed (${openTime}-${closeTime})`;
+        marketStatus.title = "Schedule mode (automatic).";
+      }
+
+      // Badge style
+      if (isOpen) {
+        marketStatus.classList.remove("secondary");
+      } else {
+        marketStatus.classList.add("secondary");
+      }
+
+      // lock trade controls when closed (UI-side)
+      submitOrder.disabled = !isOpen;
+      buyBtn.disabled = !isOpen;
+      sellBtn.disabled = !isOpen;
+      qty.disabled = !isOpen;
+    }
+
+    function refreshSelectedPanel() {
+      const s = STS.loadState();
+      selCash.textContent = STS.money(cash());
+      if (!selectedTicker) return;
+      const st = s.stocks.find(x => x.ticker === selectedTicker);
+      selPrice.textContent = STS.money(st.price);
+      computeEstimate();
+    }
+
+    function computeEstimate() {
+      const s = STS.loadState();
+      const q = Number(qty.value);
+      const st = s.stocks.find(x => x.ticker === selectedTicker);
+      const price = st ? st.price : 0;
+      estTotal.textContent = STS.money(q * price);
+    }
+
+    qty.oninput = computeEstimate;
+
+    function selectStock(ticker, action) {
+      const s = STS.loadState();
+      const st = s.stocks.find(x => x.ticker === ticker);
+      selectedTicker = ticker;
+      side = action;
+
+      selTicker.textContent = st.ticker;
+      selCompany.textContent = st.company;
+      selPrice.textContent = STS.money(st.price);
+      selCash.textContent = STS.money(cash());
+
+      buyBtn.classList.toggle("secondary", side !== "Buy");
+      sellBtn.classList.toggle("secondary", side !== "Sell");
+
+      msg.textContent = "";
+      computeEstimate();
+    }
+
+    buyBtn.onclick = () => { if (selectedTicker) selectStock(selectedTicker, "Buy"); else side = "Buy"; };
+    sellBtn.onclick = () => { if (selectedTicker) selectStock(selectedTicker, "Sell"); else side = "Sell"; };
+
+    cancelSelection.onclick = () => {
+      selectedTicker = null;
+      selTicker.textContent = "-";
+      selCompany.textContent = "-";
+      selPrice.textContent = "$0.00";
+      qty.value = "0";
+      estTotal.textContent = "$0.00";
+      msg.textContent = "";
+    };
+
+    submitOrder.onclick = () => {
+      refreshMarketBadge();
+      if (submitOrder.disabled) {
+        msg.textContent = "Market is closed. Trading disabled.";
+        return;
+      }
+
+      if (!selectedTicker) {
+        msg.textContent = "Select a stock first.";
+        return;
+      }
+
+      const res = STS.placeMarketOrder({ userId, ticker: selectedTicker, side, qty: qty.value });
+      msg.textContent = res.msg;
+      renderOrderStatus();
+      refreshSelectedPanel();
+    };
+
+    function renderStocks() {
+      const s = STS.loadState();
+      body.innerHTML = "";
+      s.stocks.forEach(st => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${st.company}</td>
+          <td>${st.ticker}</td>
+          <td>${STS.money(st.price)}</td>
+          <td>${Number(st.volume).toLocaleString()}</td>
+          <td>${st.marketCap || "-"}</td>
+          <td>${STS.money(st.open)}</td>
+          <td>${STS.money(st.high)}</td>
+          <td>${STS.money(st.low)}</td>
+          <td>
+            <button class="btn small" data-buy="${st.ticker}">Buy</button>
+            <button class="btn small secondary" data-sell="${st.ticker}">Sell</button>
+          </td>
+        `;
+        body.appendChild(tr);
+      });
+
+      body.querySelectorAll("[data-buy]").forEach(btn => btn.onclick = () => selectStock(btn.dataset.buy, "Buy"));
+      body.querySelectorAll("[data-sell]").forEach(btn => btn.onclick = () => selectStock(btn.dataset.sell, "Sell"));
+    }
+
+    function renderOrderStatus() {
+      const s = STS.loadState();
+      const orders = s.orders.filter(o => o.userId === userId).slice(0, 3);
+
+      orderStatusList.innerHTML = "";
+      if (orders.length === 0) {
+        orderStatusList.innerHTML = `<div class="muted">No orders yet.</div>`;
+        return;
+      }
+
+      orders.forEach(o => {
+        const canCancel = o.status === "Pending";
+        const pillClass =
+          o.status === "Pending" ? "pill pending" :
+          o.status === "Executed" ? "pill executed" :
+          "pill cancelled";
+
+        const el = document.createElement("div");
+        el.style.borderTop = "1px solid #eee";
+        el.style.padding = "12px 0";
+        el.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <div style="font-weight:700;">Order #${o.id}</div>
+              <div class="muted">${o.ticker} - ${o.qty} shares</div>
+              <div class="muted">${STS.money(o.total)}</div>
+              ${canCancel ? `<button class="btn small secondary" data-cancel="${o.id}" style="margin-top:8px;">Cancel Order</button>` : ""}
+            </div>
+            <div class="${pillClass}">${o.status}</div>
+          </div>
+        `;
+        orderStatusList.appendChild(el);
+      });
+
+      orderStatusList.querySelectorAll("[data-cancel]").forEach(btn => {
+        btn.onclick = () => {
+          const id = Number(btn.dataset.cancel);
+          const res = STS.cancelOrder(id, userId);
+          msg.textContent = res.msg;
+          renderOrderStatus();
+        };
+      });
+    }
+
+    renderStocks();
+    renderOrderStatus();
+    refreshSelectedPanel();
+    refreshMarketBadge(); // ADDED
+
+    setInterval(() => {
+      renderStocks();
+      renderOrderStatus();
+      refreshSelectedPanel();
+      refreshMarketBadge(); // ADDED
+    }, 1500);
+
+    window.addEventListener("sts-updated", () => {
+      renderStocks();
+      renderOrderStatus();
+      refreshSelectedPanel();
+      refreshMarketBadge(); // ADDED
+    });
+
+    window.addEventListener("storage", () => {
+      renderStocks();
+      renderOrderStatus();
+      refreshSelectedPanel();
+      refreshMarketBadge(); // ADDED
+    });
+  </script>
+</body>
+</html>
