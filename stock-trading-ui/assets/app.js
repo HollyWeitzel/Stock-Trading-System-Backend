@@ -3,6 +3,13 @@
    Front-end only (localStorage)
 ========================= */
 
+//NOTE
+//IP address must be manually changed during each test
+//Template:
+// const API_BASE = "http://YOUR-EC2-IP:3000";
+
+const API_BASE = "http://18.218.213.112:3000";
+
 const STS = (function () {
   const STORE_KEY = "STS_STATE_V1";
   const SESSION_TIMEOUT_MIN = 5; // session timeout
@@ -315,8 +322,10 @@ const STS = (function () {
     return nowM >= openM || nowM < closeM;
   }
 
-  /* ---------- auth ---------- */
-  function login(username, password, role) {
+
+
+  /* ---------- old auth ---------- */
+/*   function login(username, password, role) {
     const s = loadState();
     const u = s.users.find((x) => x.username === username && x.role === role);
     if (!u) return { ok: false, msg: "Invalid credentials." };
@@ -353,7 +362,46 @@ const STS = (function () {
       msg: "Credentials accepted. Enter security token.",
       locked: false,
     };
+  } */
+
+
+  // New Auth // 
+
+  async function login(username, password, role) {
+  try {
+    const response = await fetch(`${API_BASE}/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        username: username,
+        password: password,
+        role: role
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return { ok: false, msg: data.message || "Login failed" };
+    }
+
+    // store session (optional but keeps app working)
+    localStorage.setItem("user", JSON.stringify(data));
+
+    return {
+      ok: true,
+      msg: "Login successful",
+      locked: false
+    };
+
+  } catch (error) {
+    console.error(error);
+    return { ok: false, msg: "Server error" };
   }
+}
+
 
   function verifyToken(token) {
     const s = loadState();
