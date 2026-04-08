@@ -367,7 +367,7 @@ const STS = (function () {
 
   // New Auth // 
 
-  async function login(username, password, role) {
+/*   async function login(username, password, role) {
   try {
     const response = await fetch(`${API_BASE}/login`, {
       method: "POST",
@@ -400,8 +400,23 @@ const STS = (function () {
     console.error(error);
     return { ok: false, msg: "Server error" };
   }
-}
+} */
 
+
+  //Test Temp Auth //
+  app.post('/login', (req, res) => {
+  const { username, password, role } = req.body;
+
+  if (username === "admin" && password === "Passw0rd!") {
+    return res.json({ ok: true, role: "ADMIN" });
+  }
+
+  if (username === "customer" && password === "Passw0rd!") {
+    return res.json({ ok: true, role: "CUSTOMER" });
+  }
+
+  return res.status(401).json({ ok: false, msg: "Invalid credentials" });
+});
 
   function verifyToken(token) {
     const s = loadState();
