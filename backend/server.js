@@ -6,6 +6,13 @@ const bcrypt = require("bcrypt");
 const { Pool } = require("pg");
 
 const app = express();
+
+const path = require('path');
+app.use(express.static(path.join(__dirname, '../stock-trading-ui')));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../stock-trading-ui/login.html'));
+});
+
 app.use(cors());
 app.use(express.json());
 
