@@ -5,9 +5,9 @@
 // ==============================
 //  UPDATE THIS EVERY TIME YOUR EC2 IP CHANGES
 // ==============================
-// const API_BASE = "http://<YOUR-EC2-PUBLIC-IP>:3000";
+// const API_BASE = "http://<YOUR-EC2-PUBLIC-IP>:3001";
 
-const API_BASE = "http://<YOUR-EC2-PUBLIC-IP>:3000";
+const API_BASE = "http://18.224.213.192:3001";
 
 const STS = (function () {
   const STORE_KEY = "STS_STATE_V1";
@@ -341,18 +341,24 @@ const STS = (function () {
     // Keep your existing local session logic
     const s = loadState();
     const u = s.users.find(
-      (x) => x.username === username && x.role === role
+       (x) =>
+          x.username === username &&
+          x.role.toLowerCase() === String(role).toLowerCase()
     );
 
-    if (u) {
-      s.session = {
+     if (!u) {
+        return { ok: false, msg: "User not found locally." };
+     }
+     s.session = {
         userId: u.id,
         role: u.role,
         verified: false,
         lastActive: nowMs(),
-      };
-      saveState(s);
-    }
+     };
+     saveState(s);
+
+
+     
 
     return {
       ok: true,
