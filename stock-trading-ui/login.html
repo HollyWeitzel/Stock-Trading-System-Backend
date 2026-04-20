@@ -88,37 +88,49 @@
       recoverySection.style.display = "none";
     }
 
-    btnLogin.onclick = () => {
-      const u = document.getElementById("username").value.trim();
-      const p = document.getElementById("password").value;
-      const r = document.getElementById("role").value;
+btnLogin.onclick = async () => {
+  const u = document.getElementById("username").value.trim();
+  const p = document.getElementById("password").value;
 
-      if (!u || !p || !r) {
-        msg.textContent = "Please enter username, password, and select a role.";
-        hideAllSecondStep();
-        return;
-      }
+  if (!u || !p) {
+    msg.textContent = "Please enter username and password.";
+    return;
+  }
 
-      const res = STS.login(u, p, r);
+  try {
+    const res = await fetch("http://18.216.214.80:3001/api/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        username: u,
+        password: p
+      })
+    });
 
-      if (!res.ok) {
-        msg.textContent = res.msg;
+    const data = await res.json();
 
-        // If locked: show recovery ONLY; otherwise show nothing
-        if (res.locked) {
-          tokenSection.style.display = "none";
-          recoverySection.style.display = "block";
-        } else {
-          hideAllSecondStep();
-        }
-        return;
-      }
+    if (!res.ok) {
+      msg.textContent = data.error || "Login failed";
+      return;
+    }
 
-      // Normal flow: token step only
-      recoverySection.style.display = "none";
-      tokenSection.style.display = "block";
-      msg.textContent = "Enter your security token to continue.";
-    };
+    // Save user session locally
+    localStorage.setItem("user", JSON.stringify(data));
+
+    msg.textContent = "Login successful! Redirecting...";
+
+    // Redirect after short delay
+    setTimeout(() => {
+      window.location.href = "dashboard.html";
+    }, 800);
+
+  } catch (err) {
+    console.error(err);
+    msg.textContent = "Server error. Try again.";
+  }
+};
 
     btnToken.onclick = () => {
       const t = document.getElementById("token").value.trim();
