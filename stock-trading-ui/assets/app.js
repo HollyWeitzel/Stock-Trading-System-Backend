@@ -3,11 +3,11 @@
    Front-end only (localStorage)
 ========================= */
 // ==============================
-//  UPDATE THIS EVERY TIME YOUR EC2 IP CHANGES
+//  UPDATE THIS EVERY TIME EC2 IP CHANGES
 // ==============================
 // const API_BASE = "http://<YOUR-EC2-PUBLIC-IP>:3001";
 
-const API_BASE = "http://18.224.213.192:3001";
+const API_BASE = "http://18.216.214.80:3001";
 
 const STS = (function () {
   const STORE_KEY = "STS_STATE_V1";
