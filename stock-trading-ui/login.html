@@ -98,7 +98,7 @@ btnLogin.onclick = async () => {
   }
 
   try {
-    const res = await fetch("http://18.216.214.80:3001/login", {
+    const res = await fetch("http://18.216.214.80:3001/api/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -117,7 +117,11 @@ btnLogin.onclick = async () => {
     }
 
     // Save user session locally
-    localStorage.setItem("user", JSON.stringify(data));
+    // old localStorage.setItem("user", JSON.stringify(data));
+    localStorage.setItem("user", JSON.stringify({
+      userId: data.user_id,
+      role: data.role
+    }));
 
     msg.textContent = "Login successful! Redirecting...";
 
