@@ -97,7 +97,7 @@ app.post("/api/login", async (req, res) => {
     if (result.rowCount === 0) return res.status(401).json({ error: "Invalid login" });
 
     const user = result.rows[0];
-    const ok = await bcrypt.compare(password, user.password_hash);
+    const ok = password === user.password_hash;
     if (!ok) return res.status(401).json({ error: "Invalid login" });
 
     // Simple demo login response (JWT can come later)
