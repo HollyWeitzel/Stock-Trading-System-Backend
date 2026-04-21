@@ -107,12 +107,15 @@
 
   <script src="assets/app.js"></script>
   <script>
-    STS.requireAuth(["CUSTOMER"]);
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) {
+      window.location.href = "login.html";
+    }
     STS.renderCustomerHeader("dashboard");
     STS.startPriceGenerator();
 
-    const s0 = STS.loadState();
-    const userId = s0.session.userId;
+    
+    const userId = user.user_id;
 
     const body = document.querySelector("#stocksTable tbody");
     const selTicker = document.getElementById("selTicker");
