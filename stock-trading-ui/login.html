@@ -88,51 +88,25 @@
       recoverySection.style.display = "none";
     }
 
-btnLogin.onclick = async () => {
+btnLogin.onclick = () => {
   const u = document.getElementById("username").value.trim();
   const p = document.getElementById("password").value;
+  const r = document.getElementById("role").value;
 
-  if (!u || !p) {
-    msg.textContent = "Please enter username and password.";
+  if (!u || !p || !r) {
+    msg.textContent = "Enter username, password, and role.";
     return;
   }
 
-  try {
-    const res = await fetch("http://18.216.214.80:3001/api/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        username: u,
-        password: p
-      })
-    });
+  const res = STS.login(u, p, r);
+  msg.textContent = res.msg;
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      msg.textContent = data.error || "Login failed";
-      return;
-    }
-
-    // Save user session locally
-    // old localStorage.setItem("user", JSON.stringify(data));
-    localStorage.setItem("user", JSON.stringify({
-      userId: data.user_id,
-      role: data.role
-    }));
-
-    msg.textContent = "Login successful! Redirecting...";
-
-    // Redirect after short delay
-    setTimeout(() => {
-      window.location.href = "dashboard.html";
-    }, 800);
-
-  } catch (err) {
-    console.error(err);
-    msg.textContent = "Server error. Try again.";
+  if (res.ok) {
+    const state = STS.loadState();
+    window.location.href =
+      state.session.role === "ADMIN"
+        ? "admin.html"
+        : "dashboard.html";
   }
 };
 
