@@ -79,7 +79,7 @@
           </div>
 
           <label class="label">Quantity</label>
-          <input id="qty" class="input" value="0" />
+          <input id="qty" class="input" type="number" min="1" value="1" />
 
           <label class="label" style="margin-top:14px;">Order Type</label>
           <input class="input" value="Market Order" disabled />
@@ -122,6 +122,12 @@
     const qty = document.getElementById("qty");
     const estTotal = document.getElementById("estTotal");
     const msg = document.getElementById("msg");
+    
+    const submitOrder = document.getElementById("submitOrder");
+    const buyBtn = document.getElementById("buyBtn");
+    const sellBtn = document.getElementById("sellBtn");
+    const cancelSelection = document.getElementById("cancelSelection");
+
     const orderStatusList = document.getElementById("orderStatusList");
     const marketStatus = document.getElementById("marketStatus"); // ADDED
 
