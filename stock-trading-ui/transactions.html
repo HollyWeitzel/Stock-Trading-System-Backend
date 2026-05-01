@@ -74,13 +74,10 @@
 
   <script src="assets/app.js"></script>
   <script>
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user) {
-      window.location.href = "login.html";
-    }
+   STS.requireAuth(["CUSTOMER"]);
     STS.renderCustomerHeader("transactions");
-    
-    const userId = user.userId;
+    const s0 = STS.loadState();
+    const userId = s0.session.userId;
 
     const tbody = document.querySelector("#txTable tbody");
     const countText = document.getElementById("countText");
