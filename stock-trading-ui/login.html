@@ -88,7 +88,7 @@
       recoverySection.style.display = "none";
     }
 
-btnLogin.onclick = () => {
+btnLogin.onclick = async () => {
   const u = document.getElementById("username").value.trim();
   const p = document.getElementById("password").value;
   const r = document.getElementById("role").value;
@@ -98,7 +98,7 @@ btnLogin.onclick = () => {
     return;
   }
 
-  const res = STS.login(u, p, r);
+  const res = await STS.login(u, p, r);
   msg.textContent = res.msg;
 
   if (res.ok) {
