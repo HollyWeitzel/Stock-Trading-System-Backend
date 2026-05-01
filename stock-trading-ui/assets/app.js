@@ -430,7 +430,7 @@ const STS = (function () {
 
   function requireAuth(roles = null) {
     const s = loadState();
-    if (!s.session || !s.session.verified) window.location.href = "login.html";
+    if (!s.session) window.location.href = "login.html";
 
     const elapsed = (nowMs() - (s.session.lastActive || 0)) / 1000 / 60;
     if (elapsed > SESSION_TIMEOUT_MIN) {
