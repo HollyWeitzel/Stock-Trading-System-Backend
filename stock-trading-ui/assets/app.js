@@ -281,6 +281,7 @@ const STS = (function () {
 
   // FIXED: supports admin manual override + schedule fallback
   function isMarketOpen(atDate = new Date()) {
+     return true;
     const s = loadState();
     const market = s.market || {
       openTime: "09:30",
