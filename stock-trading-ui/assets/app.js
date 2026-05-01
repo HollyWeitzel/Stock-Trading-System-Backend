@@ -349,12 +349,14 @@ const STS = (function () {
      if (!u) {
         return { ok: false, msg: "User not found locally." };
      }
+
      s.session = {
         userId: u.id,
         role: u.role,
-        verified: false,
+        verified: true,
         lastActive: nowMs(),
      };
+    
      saveState(s);
 
 
